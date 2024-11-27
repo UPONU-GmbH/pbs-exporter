@@ -610,6 +610,15 @@ func (e *Exporter) getDatastoreMetric(datastore Datastore, ch chan<- prometheus.
 				log.Printf("INFO: Datastore: %s is being deleted, Skip scrape datastore metric", datastore.Store)
 				return nil
 			}
+			// check if datastore is backed by rotating disks
+			isRotatingDatastore, err := regexp.MatchString("(?i)unable to open chunk store at \"/mnt/datastore/ext\\d{2}", string(body[:]))
+			if err != nil {
+				return err
+			}
+			if isRotatingDatastore {
+				log.Printf("INFO: Datastore: %s is backed by rotating disks, Skip scrape datastore metric", datastore.Store)
+				return nil
+			}
 		}
 		return fmt.Errorf("ERROR: --Status code %d returned from endpoint: %s", resp.StatusCode, e.endpoint)
 	}
